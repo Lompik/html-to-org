@@ -1,0 +1,31 @@
+#+TITLE: Convert HTML files to org-mode
+
+This converts your html file to org-mode focusing on keeping the
+formatted text (no embedded span or div in the output) based on
+google's [[https://github.com/google/gumbo-parser][gumbo]] parser. It
+comes in two version (Python and Nim) which are kept in sync (does the
+same thing) as much as possible.
+
+* Usage
+  - Install ~gumbo~
+  - Run your executable of choice with one html file (or url) as argument. Output org-mode file goes to stdout.
+** python
+
+  - Install the gumbo-parser python binding
+
+#+BEGIN_SRC shell
+pip install gumbo (--user)
+#+END_SRC
+
+** nim
+
+  - To compile the nim executable
+#+BEGIN_SRC shell
+cd nim
+nim c html_to_org.nim
+#+END_SRC
+
+* todo
+  - handle HTML anchor/fragment links
+    - probably need a uid for each header
+  - fix wrong wrap in nim's version
