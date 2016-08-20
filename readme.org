@@ -29,3 +29,4 @@ nim c html_to_org.nim
   - handle HTML anchor/fragment links
     - probably need a uid for each header
   - fix wrong wrap in nim's version
+  - "browse the web in org-mode" mode
