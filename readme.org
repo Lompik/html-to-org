@@ -19,7 +19,7 @@ pip install gumbo (--user)
 
 ** nim
 
-  - To compile the nim executable
+  - To compile the nim executable (tested with nim 0.18 )
 #+BEGIN_SRC shell
 cd nim
 nim c html_to_org.nim

@@ -1,6 +1,6 @@
 import gumbo
 import algorithm
-import parseopt2
+import parseopt
 import tables
 import sequtils
 import httpclient
@@ -51,7 +51,8 @@ import htmlgen
 let g1 = epochtime()
 var html = ""
 if is_http:
-  html = getContent(filename)
+  var client = newHttpClient()
+  html = client.getContent(filename)
 else:
   html = readFile(filename)
 
@@ -70,7 +71,7 @@ proc tableify_attributes (gv:GumboVector): Table[string, string]=
   result = initTable[string,string]()
 
   let GRchildrenVector = gv
-  for i in countUp[int, int](a=0,b=int(GRchildrenVector.length)-1):
+  for i in countUp[int](a=0,b=int(GRchildrenVector.length)-1):
     let test = GRchildrenVector.data
     var nodeP = cast[ptr ptr GumboAttribute](cast[int](test) +% i* sizeof(ptr pointer) ) # pointer arithmagic
     var node = nodeP[][]
@@ -94,8 +95,8 @@ proc trimIt(input:string, leading:bool=true, trailing:bool=true):string {.procva
 var unknown = initTable[string, int]()
 
 #import templates
-template foreach_child(node:expr,children:GumboVector, body:stmt):stmt{.immediate.}=
-  for i in countUp[int, int](a=0,b=int(children.length)-1):
+template foreach_child(node:untyped,children:GumboVector, body:untyped):untyped=
+  for i in countUp[int](a=0,b=int(children.length)-1):
     let test = children.data
     let nodeP = cast[ptr ptr GumboNode](cast[int](test) +% i* sizeof(ptr pointer) ) # pointer arithmagic
     node = nodeP[][]
