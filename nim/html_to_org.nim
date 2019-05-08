@@ -71,7 +71,7 @@ proc tableify_attributes (gv:GumboVector): Table[string, string]=
   result = initTable[string,string]()
 
   let GRchildrenVector = gv
-  for i in countUp[int](a=0,b=int(GRchildrenVector.length)-1):
+  for i in countUp(a=0,b=int(GRchildrenVector.length)-1):
     let test = GRchildrenVector.data
     var nodeP = cast[ptr ptr GumboAttribute](cast[int](test) +% i* sizeof(ptr pointer) ) # pointer arithmagic
     var node = nodeP[][]
@@ -96,7 +96,7 @@ var unknown = initTable[string, int]()
 
 #import templates
 template foreach_child(node:untyped,children:GumboVector, body:untyped):untyped=
-  for i in countUp[int](a=0,b=int(children.length)-1):
+  for i in countUp(a=0,b=int(children.length)-1):
     let test = children.data
     let nodeP = cast[ptr ptr GumboNode](cast[int](test) +% i* sizeof(ptr pointer) ) # pointer arithmagic
     node = nodeP[][]
