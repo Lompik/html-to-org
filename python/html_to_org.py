@@ -2,7 +2,24 @@ import sys
 import gumbo
 import textwrap
 
+from pathlib import PurePosixPath
+from urllib.parse import urlparse, parse_qs, unquote
+
+
 options = {"rewrap": True}
+
+
+
+def extract_param_from_url(url: str, param: str) -> str:
+    """Extract the page-id from the given URL."""
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
+    return query_params.get(param, [''])[0]
+
+
+def extract_filename_from_url(url: str) -> str:
+    path = urlparse(url).path
+    return unquote(PurePosixPath(path).name)
 
 
 def _traverse(node: gumbo.Node):
@@ -17,18 +34,6 @@ def _traverse(node: gumbo.Node):
     except AttributeError:
         # Not an element.
         return
-
-
-def extract_param_from_url(url: str, param: str) -> str:
-    """Extract the page-id from the given URL."""
-    parsed_url = urlparse(url)
-    query_params = parse_qs(parsed_url.query)
-    return query_params.get(param, [''])[0]
-
-
-def extract_filename_from_url(url: str) -> str:
-    path = urlparse(url).path
-    return unquote(PurePosixPath(path).name)
 
 
 def wrap(input: str,
@@ -143,12 +148,12 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
             result = result[0:-1]
         if (attributes and "href" in attributes):
             if result == "":
-                result = wrap(attributes["href"], "[[", "]]", add_space=True)
+                result = wrap(extract_param_from_url(attributes["href"], "page-id"), "[[", "]]", add_space=True) + '\n'
             else:
-                result = wrap(attributes["href"] + "][" + result,
+                result = wrap(extract_param_from_url(attributes["href"], "page-id") + "][" + result,
                               prefix="[[",
                               suffix="]]",
-                              add_space=True)
+                              add_space=True) + '\n'
 
     elif tag in ["DL"]:
         result = result + "\n"
@@ -171,7 +176,7 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
         result = ""
 
     elif tag in ["IMG"]:
-        result = wrap("file:./imgs/" + url2filename(attributes["src"]), "[[", "]]")
+        result = wrap("file:./imgs/" + extract_filename_from_url(attributes["src"]), "[[", "]]")
 
     return result
     # else:
@@ -181,6 +186,16 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
     # else:
     #     errors.add({tag: 0})
 
+
+def skip_p(element: gumbo.Node):
+    if hasattr(element, "tag"):
+        if str(element.tag) == "DIV":
+            if hasattr(element, "attributes"):
+                attrs = {(attr.name).decode("utf-8"): (attr.value).decode("utf-8")
+                         for attr in element.attributes}
+                if "id" in attrs and attrs["id"] == "tree":
+                    return True
+    return False
 
 def html_to_org_gumbo(element: gumbo.Node, list_indent=0, noFmt=[]):
     result = ""
@@ -196,6 +211,8 @@ def html_to_org_gumbo(element: gumbo.Node, list_indent=0, noFmt=[]):
             result += trimIt(element.contents.text.decode("utf-8"))
     if hasattr(element, "children"):
         for child in element.children:
+            if skip_p(element): # my
+                continue
             skip = []
             if hasattr(child, "tag") and hasattr(element, "tag"):
                 if str(child.tag) == "CODE" and str(element.tag) == "PRE":
@@ -208,6 +225,7 @@ def html_to_org_gumbo(element: gumbo.Node, list_indent=0, noFmt=[]):
             attrs = {(attr.name).decode("utf-8"): (attr.value).decode("utf-8")
                      for attr in element.attributes}
         result = handle_tag(str(element.tag), result, list_indent, attrs, noFmt)
+
     return result
 
 
@@ -225,6 +243,7 @@ def dump_ast_gumbo(element: gumbo.Node, indent=0):
     if hasattr(element, "tag"):
         print(sindent + str(element.tag), file=sys.stderr)
 
+# ------------- main
 
 if (len(sys.argv) > 1):
     filename = sys.argv[1]
@@ -236,5 +255,4 @@ with open(filename) as f:
     input = f.read()
 
 with gumbo.gumboc.parse(input) as output:
-    # dump_ast_gumbo(output.contents.root.contents)
     print(html_to_org_gumbo(output.contents.root.contents))
