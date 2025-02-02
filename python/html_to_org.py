@@ -19,6 +19,18 @@ def _traverse(node: gumbo.Node):
         return
 
 
+def extract_param_from_url(url: str, param: str) -> str:
+    """Extract the page-id from the given URL."""
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
+    return query_params.get(param, [''])[0]
+
+
+def extract_filename_from_url(url: str) -> str:
+    path = urlparse(url).path
+    return unquote(PurePosixPath(path).name)
+
+
 def wrap(input: str,
          prefix: str,
          suffix=None,
@@ -157,6 +169,9 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
 
     elif tag in ["NAV", "META", "LINK", "SCRIPT", "STYLE"]:
         result = ""
+
+    elif tag in ["IMG"]:
+        result = wrap("file:./imgs/" + url2filename(attributes["src"]), "[[", "]]")
 
     return result
     # else:
