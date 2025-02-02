@@ -23,7 +23,7 @@ def wrap(input: str,
          prefix: str,
          suffix=None,
          add_space: bool=False,
-         add_newlines: bool=False):
+         remove_multispaces: bool=False):
     if suffix is None:
         suffix = prefix
     bprefix = prefix
@@ -31,8 +31,9 @@ def wrap(input: str,
     if add_space:
         bprefix = " " + prefix
         asuffix = suffix + " "
-
-    result = bprefix + input + asuffix
+    if remove_multispaces:
+        input = ' '.join(input.split()) # ignore spaces like all browsers do for most tags
+    result = bprefix + input  + asuffix
     return result
 
 
@@ -68,7 +69,7 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
         result = "\n#+TITLE: " + result + "\n"
 
     elif tag in ["STRONG", "B"]:
-        result = wrap(result, "*", add_space=True)
+        result = wrap(result, "*", add_space=True, remove_multispaces=True)
 
     elif tag in ["TT"]:
         result = wrap(result, "=", add_space=True)
@@ -99,6 +100,9 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
     elif tag in ["TABLE"]:
         result = wrap(result, "\n")
 
+    elif tag in ["CAPTION"]:
+        result = wrap(result, "\n")
+
     elif tag in ["CODE", "PRE"]:
         language = ""
         if result.find("\n") == -1 and len(result) < 15:
@@ -109,10 +113,13 @@ def handle_tag(tag, result, list_indent_local, attributes=None, noFmt=[]):
             result = "#+BEGIN_SRC {}\n".format(language) + result + "\n#+END_SRC\n\n"
 
     elif tag in ["TR"]:
-        result += "\n"
+        result = "| " + wrap(result, "", remove_multispaces=True) + "\n"
+
+    elif tag in ["TH"]:
+        result = result.replace('\n', '') + " | "
 
     elif tag in ["TD"]:
-        result = " | " + result + " | "
+        result = result.replace('\n', '') + " | "
 
     elif tag in ["UL", "OL"]:
         result = result + "\n"
